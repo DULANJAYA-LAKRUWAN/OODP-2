@@ -1,3 +1,19 @@
+# Compiled build directories
+target/
+**/target/
+*.class
+
+# IDE and Editor files
+.idea/
+**/.idea/
+*.iml
+.vscode/
+**/.vscode/
+.settings/
+.project
+.classpath
+
+# Course presentation and PDF files
 /GlobeMed HCS Class Diagrams.pptx
 /GlobeMed HCS Class Diagrams.pptx.pdf
 /OODP 2 Part 2.pdf
