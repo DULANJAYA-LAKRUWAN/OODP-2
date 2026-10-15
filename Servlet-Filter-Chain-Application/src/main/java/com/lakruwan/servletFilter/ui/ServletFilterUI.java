@@ -1,5 +1,6 @@
 package com.lakruwan.servletFilter.ui;
 
+import com.lakruwan.servletFilter.AuthenticationCredentials;
 import com.lakruwan.servletFilter.chain.FilterCallback;
 import com.lakruwan.servletFilter.chain.JspValidationFilter;
 import com.lakruwan.servletFilter.chain.ParameterNameFilter;
@@ -20,6 +21,7 @@ public class ServletFilterUI extends JFrame implements FilterCallback {
     private final JTextField urlField;
     private final JTextField paramField;
     private final JTextArea logArea;
+    private final AuthenticationCredentials credentials;
 
     // Filter Status Badges
     private final JLabel filter1StatusLabel;
@@ -30,8 +32,9 @@ public class ServletFilterUI extends JFrame implements FilterCallback {
     private final JPanel filter2Card;
     private final JPanel filter3Card;
 
-    public ServletFilterUI() {
+    public ServletFilterUI(AuthenticationCredentials credentials) {
         super("Servlet Filter Chain of Responsibility — Practical 05");
+        this.credentials = credentials;
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(950, 720);
         setLocationRelativeTo(null);
@@ -91,7 +94,7 @@ public class ServletFilterUI extends JFrame implements FilterCallback {
         inputPanel.add(paramLabel, gbc);
 
         gbc.gridx = 1; gbc.gridy = 1; gbc.weightx = 0.9;
-        paramField = new JTextField("username=abc&password=123");
+        paramField = new JTextField("username=<your-username>&password=<your-password>");
         paramField.setFont(new Font("Consolas", Font.PLAIN, 13));
         inputPanel.add(paramField, gbc);
 
@@ -103,20 +106,20 @@ public class ServletFilterUI extends JFrame implements FilterCallback {
         presetLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         presetPanel.add(presetLabel);
 
-        JButton p1Btn = new JButton("1. Valid (abc / 123)");
-        p1Btn.addActionListener(e -> setPreset("www.abc.com/a.jsp", "username=abc&password=123"));
+        JButton p1Btn = new JButton("1. Request Template");
+        p1Btn.addActionListener(e -> setPreset("www.abc.com/a.jsp", "username=<your-username>&password=<your-password>"));
         presetPanel.add(p1Btn);
 
         JButton p2Btn = new JButton("2. Invalid URL (.html)");
-        p2Btn.addActionListener(e -> setPreset("www.abc.com/index.html", "username=abc&password=123"));
+        p2Btn.addActionListener(e -> setPreset("www.abc.com/index.html", "username=<your-username>&password=<your-password>"));
         presetPanel.add(p2Btn);
 
         JButton p3Btn = new JButton("3. Missing Password Param");
-        p3Btn.addActionListener(e -> setPreset("www.abc.com/a.jsp", "username=abc"));
+        p3Btn.addActionListener(e -> setPreset("www.abc.com/a.jsp", "username=<your-username>"));
         presetPanel.add(p3Btn);
 
         JButton p4Btn = new JButton("4. Wrong Password Value");
-        p4Btn.addActionListener(e -> setPreset("www.abc.com/a.jsp", "username=abc&password=999"));
+        p4Btn.addActionListener(e -> setPreset("www.abc.com/a.jsp", "username=<your-username>&password=<your-password>"));
         presetPanel.add(p4Btn);
 
         inputPanel.add(presetPanel, gbc);
@@ -134,7 +137,10 @@ public class ServletFilterUI extends JFrame implements FilterCallback {
         filter2Card = createFilterCard("Filter 2", "Parameter Names", "Verifies presence of 'username' & 'password'");
         filter2StatusLabel = (JLabel) filter2Card.getClientProperty("statusLabel");
 
-        filter3Card = createFilterCard("Filter 3", "Parameter Values", "Authenticates username='abc' & password='123'");
+        filter3Card = createFilterCard(
+                "Filter 3",
+                "Parameter Values",
+                "Matches credentials supplied through environment configuration");
         filter3StatusLabel = (JLabel) filter3Card.getClientProperty("statusLabel");
 
         pipelinePanel.add(filter1Card);
@@ -272,7 +278,7 @@ public class ServletFilterUI extends JFrame implements FilterCallback {
         logArea.append("\n=======================================================\n");
         logArea.append(">> INCOMING HTTP REQUEST DISPATCHED\n");
         logArea.append("   Target URL: " + url + "\n");
-        logArea.append("   Parameters: " + params + "\n");
+        logArea.append("   Parameters: " + params.replaceAll("(?i)(password\\s*=)[^&]*", "$1<redacted>") + "\n");
         logArea.append("=======================================================\n");
 
         Request request = new Request(url, params);
@@ -280,7 +286,10 @@ public class ServletFilterUI extends JFrame implements FilterCallback {
         // Assemble Chain
         JspValidationFilter f1 = new JspValidationFilter(this);
         ParameterNameFilter f2 = new ParameterNameFilter(this);
-        ParameterValueFilter f3 = new ParameterValueFilter("abc", "123", this);
+        ParameterValueFilter f3 = new ParameterValueFilter(
+                credentials.getUsername(),
+                credentials.getPassword(),
+                this);
 
         f1.setHandler(f2);
         f2.setHandler(f3);
@@ -320,13 +329,21 @@ public class ServletFilterUI extends JFrame implements FilterCallback {
     }
 
     public static void main(String[] args) {
+        AuthenticationCredentials credentials;
+        try {
+            credentials = AuthenticationCredentials.fromEnvironment();
+        } catch (IllegalStateException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
+
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {
         }
 
         SwingUtilities.invokeLater(() -> {
-            ServletFilterUI ui = new ServletFilterUI();
+            ServletFilterUI ui = new ServletFilterUI(credentials);
             ui.setVisible(true);
         });
     }

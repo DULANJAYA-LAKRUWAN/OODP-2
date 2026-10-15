@@ -16,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class FilterChainTest {
 
+    private static final String TEST_USERNAME = "test-user";
+    private static final String TEST_PASSWORD = "test-only-password";
+
     private JspValidationFilter filter1;
     private ParameterNameFilter filter2;
     private ParameterValueFilter filter3;
@@ -49,7 +52,7 @@ public class FilterChainTest {
 
         filter1 = new JspValidationFilter(testCallback);
         filter2 = new ParameterNameFilter(testCallback);
-        filter3 = new ParameterValueFilter("abc", "123", testCallback);
+        filter3 = new ParameterValueFilter(TEST_USERNAME, TEST_PASSWORD, testCallback);
 
         // Chain linking
         filter1.setHandler(filter2);
@@ -57,9 +60,17 @@ public class FilterChainTest {
     }
 
     @Test
+    @DisplayName("Should reject missing or blank configured credentials")
+    void testFilterRequiresConfiguredCredentials() {
+        assertThrows(IllegalArgumentException.class, () -> new ParameterValueFilter(null, TEST_PASSWORD));
+        assertThrows(IllegalArgumentException.class, () -> new ParameterValueFilter(" ", TEST_PASSWORD));
+        assertThrows(IllegalArgumentException.class, () -> new ParameterValueFilter(TEST_USERNAME, ""));
+    }
+
+    @Test
     @DisplayName("Should successfully pass through all 3 filters when request is valid")
     void testValidRequestPassesAllFilters() {
-        Request request = new Request("www.abc.com/a.jsp", "username=abc&password=123");
+        Request request = new Request("www.abc.com/a.jsp", "username=" + TEST_USERNAME + "&password=" + TEST_PASSWORD);
         filter1.handle(request);
 
         assertEquals(3, successList.size(), "All 3 filters should have succeeded");
@@ -71,7 +82,7 @@ public class FilterChainTest {
     @Test
     @DisplayName("Should fail at Filter 1 when URL is not a .jsp resource")
     void testInvalidUrlFailsAtFilter1() {
-        Request request = new Request("www.abc.com/index.html", "username=abc&password=123");
+        Request request = new Request("www.abc.com/index.html", "username=" + TEST_USERNAME + "&password=" + TEST_PASSWORD);
         filter1.handle(request);
 
         assertEquals(1, failureList.size());
@@ -83,7 +94,7 @@ public class FilterChainTest {
     @Test
     @DisplayName("Should pass Filter 1 but fail at Filter 2 when 'password' parameter is missing")
     void testMissingParameterFailsAtFilter2() {
-        Request request = new Request("www.abc.com/a.jsp", "username=abc");
+        Request request = new Request("www.abc.com/a.jsp", "username=" + TEST_USERNAME);
         filter1.handle(request);
 
         assertEquals(1, successList.size());
@@ -97,7 +108,7 @@ public class FilterChainTest {
     @Test
     @DisplayName("Should pass Filter 1 and 2 but fail at Filter 3 when credentials do not match")
     void testWrongCredentialsFailsAtFilter3() {
-        Request request = new Request("www.abc.com/a.jsp", "username=abc&password=999");
+        Request request = new Request("www.abc.com/a.jsp", "username=" + TEST_USERNAME + "&password=incorrect");
         filter1.handle(request);
 
         assertEquals(2, successList.size());
@@ -112,12 +123,12 @@ public class FilterChainTest {
     @Test
     @DisplayName("Request parameter parsing should handle URL query parameters correctly")
     void testRequestParameterParsing() {
-        Request request = new Request("www.abc.com/a.jsp", "username=abc&password=123&role=admin");
+        Request request = new Request("www.abc.com/a.jsp", "username=" + TEST_USERNAME + "&password=" + TEST_PASSWORD + "&role=admin");
         assertTrue(request.hasParameter("username"));
         assertTrue(request.hasParameter("password"));
         assertTrue(request.hasParameter("role"));
-        assertEquals("abc", request.getParameter("username"));
-        assertEquals("123", request.getParameter("password"));
+        assertEquals(TEST_USERNAME, request.getParameter("username"));
+        assertEquals(TEST_PASSWORD, request.getParameter("password"));
         assertEquals("admin", request.getParameter("role"));
         assertFalse(request.hasParameter("unknown"));
     }

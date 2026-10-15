@@ -3,24 +3,22 @@ package com.lakruwan.servletFilter.chain;
 import com.lakruwan.servletFilter.model.Request;
 
 /**
- * Filter 3: Validates the parameter values:
- * username must equal "abc" and password must equal "123".
+ * Filter 3: Validates parameter values against the configured credentials.
  */
 public class ParameterValueFilter extends Handler {
     private final String expectedUsername;
     private final String expectedPassword;
     private FilterCallback callback;
 
-    public ParameterValueFilter() {
-        this("abc", "123");
-    }
-
     public ParameterValueFilter(String expectedUsername, String expectedPassword) {
-        this.expectedUsername = expectedUsername;
-        this.expectedPassword = expectedPassword;
+        this(expectedUsername, expectedPassword, null);
     }
 
     public ParameterValueFilter(String expectedUsername, String expectedPassword, FilterCallback callback) {
+        if (expectedUsername == null || expectedUsername.trim().isEmpty()
+                || expectedPassword == null || expectedPassword.trim().isEmpty()) {
+            throw new IllegalArgumentException("Expected username and password must be configured.");
+        }
         this.expectedUsername = expectedUsername;
         this.expectedPassword = expectedPassword;
         this.callback = callback;
@@ -57,7 +55,7 @@ public class ParameterValueFilter extends Handler {
         } else {
             String errorMsg = "Authentication failed! Invalid username or password.";
             if (!userMatch) {
-                errorMsg += " (Username '" + actualUsername + "' does not match expected '" + expectedUsername + "')";
+                errorMsg += " (Username does not match the configured value)";
             } else {
                 errorMsg += " (Incorrect password)";
             }

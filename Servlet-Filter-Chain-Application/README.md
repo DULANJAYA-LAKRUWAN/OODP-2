@@ -79,8 +79,8 @@ Incoming Request
           │ (Pass)
           ▼
 ┌──────────────────┐
-│     Filter 3     │  Validates parameter values:
-│ Parameter Values │  username == "abc" && password == "123"
+│     Filter 3     │  Validates parameter values against
+│ Parameter Values │  the configured username and password
 └─────────┬────────┘  ❌ Fail: Reject with 401 Unauthorized
           │ (Pass)
           ▼
@@ -100,6 +100,7 @@ Servlet-Filter-Chain-Application/
 ├── README.md                                 # Comprehensive documentation & Viva Q&A
 └── src/
     ├── main/java/com/lakruwan/servletFilter/
+    │   ├── AuthenticationCredentials.java    # Required runtime environment credentials
     │   ├── model/
     │   │   └── Request.java                  # HTTP Request representation
     │   ├── chain/
@@ -118,6 +119,14 @@ Servlet-Filter-Chain-Application/
 ---
 
 ## 🚀 How to Run
+
+Set both environment variables before launching either application. The application
+does not provide default credentials and exits with an error if either value is missing.
+
+```powershell
+$env:SERVLET_FILTER_USERNAME = "<your-username>"
+$env:SERVLET_FILTER_PASSWORD = "<your-password>"
+```
 
 ### 1. Run Automated Console Tests
 ```bash

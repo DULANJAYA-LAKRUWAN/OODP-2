@@ -15,6 +15,13 @@ import com.lakruwan.servletFilter.model.Request;
 public class ServletFilterApp {
 
     public static void main(String[] args) {
+        AuthenticationCredentials credentials;
+        try {
+            credentials = AuthenticationCredentials.fromEnvironment();
+        } catch (IllegalStateException e) {
+            System.err.println(e.getMessage());
+            return;
+        }
         System.out.println("======================================================================");
         System.out.println("   Practical 05: Chain of Responsibility Design Pattern");
         System.out.println("   Servlet Filter Simulation Demonstration");
@@ -23,7 +30,7 @@ public class ServletFilterApp {
         // 1. Create Handlers (Filters)
         Handler filter1 = new JspValidationFilter();
         Handler filter2 = new ParameterNameFilter();
-        Handler filter3 = new ParameterValueFilter("abc", "123");
+        Handler filter3 = new ParameterValueFilter(credentials.getUsername(), credentials.getPassword());
 
         // 2. Link the Chain: Filter 1 -> Filter 2 -> Filter 3
         filter1.setHandler(filter2);
@@ -31,31 +38,32 @@ public class ServletFilterApp {
 
         // 3. Test Scenarios
         System.out.println("\n--------------------------------------------------");
+        String validParameters = "username=" + credentials.getUsername() + "&password=" + credentials.getPassword();
         System.out.println("TEST CASE 1: Valid Request (Matches Practical Diagram)");
-        System.out.println("URL: 'www.abc.com/a.jsp' | Params: 'username=abc&password=123'");
+        System.out.println("URL: 'www.abc.com/a.jsp' | Params: 'username=<configured>&password=<redacted>'");
         System.out.println("--------------------------------------------------");
-        Request req1 = new Request("www.abc.com/a.jsp", "username=abc&password=123");
+        Request req1 = new Request("www.abc.com/a.jsp", validParameters);
         filter1.handle(req1);
 
         System.out.println("\n--------------------------------------------------");
         System.out.println("TEST CASE 2: Invalid Resource Extension (Filter 1 Fails)");
-        System.out.println("URL: 'www.abc.com/index.html' | Params: 'username=abc&password=123'");
+        System.out.println("URL: 'www.abc.com/index.html' | Params: 'username=<configured>&password=<redacted>'");
         System.out.println("--------------------------------------------------");
-        Request req2 = new Request("www.abc.com/index.html", "username=abc&password=123");
+        Request req2 = new Request("www.abc.com/index.html", validParameters);
         filter1.handle(req2);
 
         System.out.println("\n--------------------------------------------------");
         System.out.println("TEST CASE 3: Missing Required Parameter Name (Filter 2 Fails)");
         System.out.println("URL: 'www.abc.com/a.jsp' | Params: 'username=abc'");
         System.out.println("--------------------------------------------------");
-        Request req3 = new Request("www.abc.com/a.jsp", "username=abc");
+        Request req3 = new Request("www.abc.com/a.jsp", "username=" + credentials.getUsername());
         filter1.handle(req3);
 
         System.out.println("\n--------------------------------------------------");
         System.out.println("TEST CASE 4: Invalid Parameter Values (Filter 3 Fails)");
-        System.out.println("URL: 'www.abc.com/a.jsp' | Params: 'username=abc&password=wrongpass'");
+        System.out.println("URL: 'www.abc.com/a.jsp' | Params: 'username=<configured>&password=<redacted>'");
         System.out.println("--------------------------------------------------");
-        Request req4 = new Request("www.abc.com/a.jsp", "username=abc&password=wrongpass");
+        Request req4 = new Request("www.abc.com/a.jsp", "username=" + credentials.getUsername() + "&password=" + credentials.getPassword() + "-incorrect");
         filter1.handle(req4);
 
         System.out.println("\n======================================================================");
