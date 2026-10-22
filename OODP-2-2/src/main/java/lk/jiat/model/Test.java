@@ -3,10 +3,14 @@ package lk.jiat.model;
 import java.util.ArrayList;
 import java.util.List;
 
+// Component Interface
 interface Employee {
-    double getTotalSalary();
+    String getName();
+    double getSalary();
+    double getTotalSalary(); // operation()
 }
 
+// Leaf Class
 class Developer implements Employee {
     private final String name;
     private final double salary;
@@ -17,11 +21,22 @@ class Developer implements Employee {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public double getSalary() {
+        return salary;
+    }
+
+    @Override
     public double getTotalSalary() {
         return salary;
     }
 }
 
+// Composite Base Class
 abstract class TeamLead implements Employee {
     private final String name;
     private final double salary;
@@ -41,6 +56,16 @@ abstract class TeamLead implements Employee {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public double getSalary() {
+        return salary;
+    }
+
+    @Override
     public double getTotalSalary() {
         double total = salary;
         for (Employee employee : team) {
@@ -48,18 +73,16 @@ abstract class TeamLead implements Employee {
         }
         return total;
     }
-
-    protected String getName() {
-        return name;
-    }
 }
 
+// Composite: Project Lead
 class ProjectLead extends TeamLead {
     public ProjectLead(String name, double salary) {
         super(name, salary);
     }
 }
 
+// Composite: Manager
 class Manager extends TeamLead {
     public Manager(String name, double salary) {
         super(name, salary);
@@ -68,8 +91,10 @@ class Manager extends TeamLead {
 
 public class Test {
     public static void main(String[] args) {
+        // Manager (Root)
         Manager manager = new Manager("Kevin", 180000);
 
+        // Project Leads (Intermediate Composites)
         ProjectLead henry = new ProjectLead("Henry", 100000);
         henry.add(new Developer("Ryan", 80000));
 
@@ -80,12 +105,16 @@ public class Test {
         levi.add(new Developer("Kevin", 60000));
         levi.add(new Developer("Alex", 70000));
 
+        // Add Project Leads to Manager
         manager.add(henry);
         manager.add(matthew);
         manager.add(levi);
 
+        // 1. Calculate the total salary paid to all the employees when requesting the manager's salary
         System.out.printf("Total salary for Manager %s and all teams: Rs. %.2f%n",
                 manager.getName(), manager.getTotalSalary());
+
+        // 2. Calculate the total salary paid to the project lead ("Levi") and his team
         System.out.printf("Total salary for Project Lead %s and his team: Rs. %.2f%n",
                 levi.getName(), levi.getTotalSalary());
     }
