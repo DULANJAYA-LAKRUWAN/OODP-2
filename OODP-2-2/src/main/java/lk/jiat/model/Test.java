@@ -1,7 +1,6 @@
 package lk.jiat.model;
 
 import java.util.ArrayList;
-import java.util.List;
 
 // Component Interface
 interface Employee {
@@ -12,8 +11,9 @@ interface Employee {
 
 // Leaf Class
 class Developer implements Employee {
-    private final String name;
-    private final double salary;
+
+    private String name;
+    private double salary;
 
     public Developer(String name, double salary) {
         this.name = name;
@@ -37,12 +37,13 @@ class Developer implements Employee {
 }
 
 // Composite Base Class
-abstract class TeamLead implements Employee {
-    private final String name;
-    private final double salary;
-    private final List<Employee> team = new ArrayList<>();
+class TeamLead implements Employee {
 
-    protected TeamLead(String name, double salary) {
+    private String name;
+    private double salary;
+    private ArrayList<Employee> team = new ArrayList<>();
+
+    public TeamLead(String name, double salary) {
         this.name = name;
         this.salary = salary;
     }
@@ -92,7 +93,7 @@ class Manager extends TeamLead {
 public class Test {
     public static void main(String[] args) {
         // Manager (Root)
-        Manager manager = new Manager("Kevin", 180000);
+        Manager manager = new Manager("John", 150000);
 
         // Project Leads (Intermediate Composites)
         ProjectLead henry = new ProjectLead("Henry", 100000);
